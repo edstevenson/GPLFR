@@ -1,0 +1,61 @@
+# Example sweep config for PyXOpto (balanced subsets per g).
+data_path: data/refl.npz
+split_path: data/split1540_330_335s0.npz
+
+out_dir: ROOT/experiments/pyxopto/sweeps
+emulators: [pca_icm]
+max_train: null
+log_eps: 1.0e-30
+
+pca_icm:
+  n_components: 25
+  kernel: matern52
+  per_latent_kernel: false
+  per_latent_noise: true
+  train_hyperparams: true
+  num_steps: 200
+  lr: 5.0e-2
+  random_seed: 0
+  device: auto
+  dtype: float64
+
+pca_mlp:
+  n_components: 25
+  hidden_width: 128
+  train_hyperparams: true
+  num_steps: 3000
+  lr: 1.0e-3
+  weight_decay: 1.0e-3
+  early_stop_patience_evals: 8
+  early_stop_min_delta: 0.0
+  log_every: 100
+  verbose: false
+  random_seed: 0
+  device: auto
+  dtype: float64
+
+sweep:
+  enabled: true
+  parallel_seeds: false
+  name: pcagp-n200-400-pc10-25-s0-1-2
+  emulators: [pca_icm]
+  grid:
+    n_train: [200, 400]
+    pca_icm:
+      n_components: [10, 25]
+      per_latent_kernel: [false]
+      num_steps: [100]
+    pca_mlp:
+      n_components: [10]
+      hidden_width: [128]
+      weight_decay: [1.0e-3]
+  seeds: [0, 1, 2]
+  slurm:
+    enabled: false
+    partition: ampere
+    account_cpu: ""
+    account_gpu: ""
+    account_dawn: ""
+    cpus_per_task: 12
+    time: "02:00:00"
+    gres: "gpu:1"

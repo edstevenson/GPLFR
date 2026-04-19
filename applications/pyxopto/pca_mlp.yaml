@@ -1,0 +1,52 @@
+# Default PyXOpto benchmark config (single run) for PCA+MLP baseline.
+data_path: data/refl.npz
+split_path: data/split1205_500_500s0.npz
+
+out_dir: ROOT/experiments/pyxopto/pcamlp
+eval_set: test
+emulators: [pca_mlp]
+
+# Preprocessing: log10(Y + eps) before per-radius z-scoring.
+log_eps: 1.0e-8
+save_model: false
+
+simplex: {}
+
+pca_mlp:
+  n_components: 6
+  hidden_width: 128
+  activation: silu  # silu | relu
+  train_hyperparams: true
+  num_steps: 3000
+  lr: 1.0e-3
+  weight_decay: 1.0e-3
+  early_stop_metric: mae_val  # mae_val | rmse_val (in unstandardized log space)
+  early_stop_patience_evals: 8
+  early_stop_min_delta: 0.0
+  log_every: 100
+  verbose: false
+  random_seed: 0
+  device: auto
+  dtype: float64
+
+sweep:
+  enabled: true
+  parallel_seeds: true
+  name: pcamlp-n200-z6-val-tune
+  emulators: [pca_mlp]
+  grid:
+    n_train: [200]
+    pca_mlp:
+      n_components: [6]
+      hidden_width: [32, 64, 128, 256]
+      weight_decay: [1.0e-4, 3.0e-4, 1.0e-3, 1.0e-2, 3.0e-2]
+  seeds: [0]
+  slurm:
+    enabled: true
+    partition: pvc9
+    account_cpu: ""
+    account_gpu: ""
+    account_dawn: PION-P8-DAWN-GPU
+    cpus_per_task: 12
+    time: "06:00:00"
+    gres: "gpu:1"

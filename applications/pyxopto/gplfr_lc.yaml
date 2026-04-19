@@ -1,0 +1,70 @@
+data_path: ROOT/src/xce/benchmarks/pyxopto/data/refl.npz
+split_path: ROOT/src/xce/benchmarks/pyxopto/data/split1205_500_500s0.npz
+out_dir: ROOT/experiments/pyxopto/gplfr-current-best
+eval_set: test
+emulators:
+- gplfr
+log_eps: 1.0e-08
+save_model: false
+
+gplfr:
+  n_train: 400
+  latent_dim: 10
+  kernel: rbf
+  ell_mode: per_latent
+  coreg_mode: lkj
+  eta_lkj: 1.0
+  tau: 1.0
+  tau_schedule: {enabled: false, kind: exp, start: 1.0, end: 1.0}
+  sigma_f_mode: per_latent          # null | per_latent
+  sigma_xi2_mode: float             # float | shared | per_latent
+  sigma_xi2: 1.0e-06
+  jitter: 1.0e-06
+  num_steps: 5000
+  lr_Z: 0.01
+  lr_global: 0.01
+  lr_gamma: 0.999
+  frozen_Z_start: 0.2
+  log_every: 100
+  record_loss_curve: false
+  early_stop_patience_evals: 8
+  early_stop_min_delta: 0.0
+  random_seed: 0
+  verbose: true
+  device: auto
+  dtype: float64
+  pca_init:
+    enabled: true
+    whiten_scores: false
+    init_sigma_f: null  # null | pca (null uses guide default: init_to_median)
+sweep:
+  enabled: true
+  name: gplfr-n25--800-z7-s0--4
+  emulators:
+  - gplfr
+  grid:
+    n_train: [25, 50, 100, 200, 400, 800]
+    gplfr:
+      frozen_Z_start:
+      - 0.3
+      lr_global:
+      - 0.01
+      lr_Z:
+      - 0.01
+      latent_dim: [7]
+  seeds:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  parallel_seeds: true
+  slurm:
+    enabled: false
+    partition: pvc9
+    account_cpu: ''
+    account_gpu: ''
+    account_dawn: PION-P8-DAWN-GPU
+    cpus_per_task: 12
+    time: 06:00:00
+    gres: gpu:1

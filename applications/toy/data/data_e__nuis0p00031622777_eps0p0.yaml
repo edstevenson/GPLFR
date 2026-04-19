@@ -1,0 +1,23 @@
+out_path: /path/to/repo/src/xce/benchmarks/toy/data/data_e__nuis0p00031622777_eps0p0.npz
+N: 3000
+Dx: 3
+H: 16
+W: 16
+Dy: 256
+D_sig: 6
+kernel: rbf
+ell: 2.0
+ell_mode: uniform
+ell_min: 1.0
+ell_max: 3.0
+sigma_sig: 1.0
+ell_nuis: 2.0
+sigma_nuis: 0.00031622776601683794
+sigma_eps: 0.0
+jitter: 1.0e-06
+blob_sigma_min: 1.0
+blob_sigma_max: 2.0
+seed: 0
+derived_from: /path/to/repo/src/xce/benchmarks/toy/data/data_e__nuis0p0_eps0p0.npz
+note: Exact copy of data_e__nuis0p0_eps0p0 random params with sigma_nuis=sqrt(1e-07)
+  and sigma_eps=0.0; eps realization fixed.

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gplfr"
+version = "0.1.0"
+description = "Domain-agnostic Bayesian latent-variable regression library"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+  "beartype",
+  "jaxtyping",
+  "numpy>=1.24",
+  "pyro-ppl",
+  "PyYAML",
+  "scikit-learn",
+  "scipy",
+  "torch",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+notebooks = ["jupyter", "matplotlib"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gplfr", "gplfr.*", "applications", "applications.*", "scripts", "scripts.*"]

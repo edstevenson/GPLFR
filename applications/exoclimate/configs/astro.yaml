@@ -1,0 +1,9 @@
+name: astro
+subset: multi-GCM_complete-obs-only
+protocol: shared_planets
+include_standard_test_unique: true
+data_dir: exoworldsbench/dataset
+out_dir: gplfr/applications/exoclimate/runs/astro
+model_path: gplfr/applications/exoclimate/runs/astro/model.npz
+prediction_path: gplfr/applications/exoclimate/runs/astro/predictions.npz
+notes: public astro seed trains on EWB train plus standard-only unique tests
