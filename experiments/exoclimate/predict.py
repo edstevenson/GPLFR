@@ -1,14 +1,17 @@
+"""Benchmark-facing exoclimate prediction wrapper."""
+
 from __future__ import annotations
 
+import json
+import sys
 from pathlib import Path
 from typing import Any
-import json
 
 import numpy as np
 import yaml
 import exoworldsbench as ewb
 
-from .weighting import build_group_report, field_group_counts
+from .weighting import build_group_report
 
 APP_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = APP_ROOT.parents[2]
@@ -74,33 +77,13 @@ def load_config(config: str | Path | dict[str, Any] | None, *, argv: list[str] |
     cfg.setdefault("protocol", "standard")
     cfg.setdefault("include_standard_test_unique", False)
     cfg.setdefault("data_dir", "exoworldsbench/dataset")
-    cfg.setdefault("out_dir", f"gplfr/applications/exoclimate/runs/{cfg['name']}")
+    cfg.setdefault("out_dir", f"gplfr/experiments/exoclimate/runs/{cfg['name']}")
     cfg.setdefault("model_path", f"{cfg['out_dir']}/model.npz")
     cfg.setdefault("prediction_path", f"{cfg['out_dir']}/predictions.npz")
     cfg["config_path"] = cfg_path
     for key in ("config_path", "data_dir", "out_dir", "model_path", "prediction_path"):
         cfg[key] = _resolve_path(cfg[key])
     return cfg
-
-
-def masked_mean_grid(Y: np.ndarray, field_mask: np.ndarray) -> np.ndarray:
-    mask = np.asarray(field_mask, dtype=np.float32)[:, :, None, None]
-    total = np.where(mask.astype(bool), np.asarray(Y, dtype=np.float32), 0.0).sum(axis=0)
-    count = mask.sum(axis=0)
-    return np.where(count > 0, total / np.clip(count, 1.0, None), 0.0).astype(np.float32)
-
-
-def _concat_train_unique(cfg: dict[str, Any], bundle: ewb.DataBundle) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    if not cfg["include_standard_test_unique"]:
-        return bundle.X_train, bundle.Y_train, bundle.field_mask_train, bundle.train_ids
-    standard = ewb.load(cfg["subset"], "standard", data_dir=cfg["data_dir"], space="grid")
-    keep = ~np.isin(standard.test_ids, bundle.test_ids)
-    return (
-        np.concatenate([bundle.X_train, standard.X_test[keep]], axis=0),
-        np.concatenate([bundle.Y_train, standard.Y_test[keep]], axis=0),
-        np.concatenate([bundle.field_mask_train, standard.field_mask_test[keep]], axis=0),
-        np.concatenate([bundle.train_ids, standard.test_ids[keep]], axis=0),
-    )
 
 
 def save_submission(path: str | Path, predictions: np.ndarray, bundle: ewb.DataBundle) -> Path:
@@ -115,42 +98,7 @@ def save_submission(path: str | Path, predictions: np.ndarray, bundle: ewb.DataB
     return path
 
 
-def fit_train_mean(config: str | Path | dict[str, Any] | None = None, *, argv: list[str] | None = None) -> dict[str, Any]:
-    cfg = load_config(config, argv=argv)
-    bundle = ewb.load(cfg["subset"], cfg["protocol"], data_dir=cfg["data_dir"], space="grid")
-    stats = ewb.load_stats(cfg["subset"], cfg["data_dir"])
-    X_train, Y_train, field_mask, train_ids = _concat_train_unique(cfg, bundle)
-    mean = masked_mean_grid(ewb.preprocess_outputs_grid(Y_train, bundle.field_names, stats, X=X_train), field_mask)
-    model_path = Path(cfg["model_path"])
-    model_path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(
-        model_path,
-        mean=mean,
-        field_names=np.asarray(bundle.field_names),
-        input_names=np.asarray(bundle.input_names),
-        subset=np.asarray(cfg["subset"]),
-        protocol=np.asarray(cfg["protocol"]),
-        include_standard_test_unique=np.asarray(bool(cfg["include_standard_test_unique"])),
-        train_ids=np.asarray(train_ids, dtype=np.int32),
-    )
-    summary = {
-        "name": cfg["name"],
-        "subset": cfg["subset"],
-        "protocol": cfg["protocol"],
-        "include_standard_test_unique": bool(cfg["include_standard_test_unique"]),
-        "train_examples": int(len(train_ids)),
-        "test_examples": int(len(bundle.test_ids)),
-        "field_count": int(len(bundle.field_names)),
-        "field_group_counts": field_group_counts(bundle.field_names),
-        "model_path": model_path,
-        "config_path": cfg["config_path"],
-        "data_dir": cfg["data_dir"],
-    }
-    write_json(Path(cfg["out_dir"]) / "train_summary.json", summary)
-    return summary
-
-
-def predict_train_mean(config: str | Path | dict[str, Any] | None = None, *, argv: list[str] | None = None) -> dict[str, Any]:
+def predict(config: str | Path | dict[str, Any] | None = None, *, argv: list[str] | None = None) -> dict[str, Any]:
     cfg = load_config(config, argv=argv)
     with np.load(cfg["model_path"], allow_pickle=False) as npz:
         mean = np.asarray(npz["mean"], dtype=np.float32)
@@ -180,3 +128,11 @@ def predict_train_mean(config: str | Path | dict[str, Any] | None = None, *, arg
         "rmse_per_group": group_report["metrics"]["rmse"]["per_field_group"],
         "energy_score_per_group": group_report["metrics"]["energy_score"]["per_field_group"],
     }
+
+
+def main(argv: list[str] | None = None) -> None:
+    print(json.dumps(predict(argv=sys.argv[1:] if argv is None else argv), indent=2, default=str))
+
+
+if __name__ == "__main__":
+    main()

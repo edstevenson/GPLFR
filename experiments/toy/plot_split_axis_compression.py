@@ -1,7 +1,7 @@
 """Split-axis compression-curve plotter for toy benchmark sweeps.
 
 Usage example:
-  micromamba run -n xapm python -m gplfr.applications.toy.plot_split_axis_compression \
+  micromamba run -n xapm python -m gplfr.experiments.toy.plot_split_axis_compression \
     --left-json experiments/toy1e/gplfr-homotopy-n800-z2-4-6-8-10-20-30-40-50-s0--4-log50-pvc9/metrics.json \
     --right-json experiments/toy1e/pcagp-n800-z2-4-6-8-10-20-30-40-50-s0--4-es10-log50-icelake/metrics.json \
     --baseline-json experiments/toy1e/baselines.json \

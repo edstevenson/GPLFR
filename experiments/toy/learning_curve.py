@@ -1,7 +1,7 @@
 """Plot toy-benchmark learning curves (metric vs n_train).
 
 This is a thin wrapper around the (more up-to-date) PyXOpto plotting utilities:
-`gplfr.applications.pyxopto.learning_curve`.
+`gplfr.experiments.pyxopto.learning_curve`.
 
 It is compatible with toy sweep outputs produced by:
 - `scripts/toy_merge_parallel_seeds.py` (writes `metrics.json` with `variants`)

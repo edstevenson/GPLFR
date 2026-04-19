@@ -1,6 +1,6 @@
 """Plot RMSE_sig vs sigma_nuis for toy dataset variants.
 
-This mirrors the visual style of `gplfr.applications.pyxopto.compression_curve` but
+This mirrors the visual style of `gplfr.experiments.pyxopto.compression_curve` but
 uses sigma_nuis (parsed from sweep directory names) as the x-axis.
 """
 

@@ -1,7 +1,7 @@
 """Toy benchmark runner (PCA+GP vs GPLFR).
 
 Run with:
-  micromamba run -n xapm python -m gplfr.applications.toy.train config=/abs/path/to/config.yaml
+  micromamba run -n xapm python -m gplfr.experiments.toy.train config=/abs/path/to/config.yaml
 Or via wrapper:
   micromamba run -n xapm python scripts/toy_run.py config=/abs/path/to/config.yaml
 

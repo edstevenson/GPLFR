@@ -27,20 +27,20 @@ the public `exoworldsbench` package as a peer dependency.
 ## Quickstart
 
 ```bash
-jupyter lab examples/quickstart.ipynb
+jupyter lab notebooks/quickstart.ipynb
 ```
 
-A small synthetic demo that generates data, fits `applications.toy.GPLFR`, and
+A small synthetic demo that generates data, fits `experiments.toy.GPLFR`, and
 plots predictions.
 
 ## Worked examples
 
 | Path | What it shows | Scale |
 | --- | --- | --- |
-| `examples/quickstart.ipynb` | `fit -> predict -> plot` on synthetic data | <1 min |
-| `applications/toy/` | Paper toy experiments: sweeps, learning curves, compression curves | minutes-hours |
-| `applications/pyxopto/` | Paper PyXOpto reflectance experiments | hours |
-| `applications/exoclimate/` | ExoWorldsBench climate-emulation application | depends on dataset |
+| `notebooks/quickstart.ipynb` | `fit -> predict -> plot` on synthetic data | <1 min |
+| `experiments/toy/` | Paper toy experiments: sweeps, learning curves, compression curves | minutes-hours |
+| `experiments/pyxopto/` | Paper PyXOpto reflectance experiments | hours |
+| `experiments/exoclimate/` | ExoWorldsBench climate-emulation experiment | depends on dataset |
 
 Each application ships its own `gplfr.py` with a domain-adapted model class on
 top of the shared primitives in `gplfr.shared.{kernels,linear_trend,tempering,utils}`.
@@ -48,8 +48,8 @@ top of the shared primitives in `gplfr.shared.{kernels,linear_trend,tempering,ut
 ## Application entrypoints
 
 ```bash
-python -m gplfr.applications.exoclimate.train config=applications/exoclimate/configs/ewb-baseline.yaml
-python -m gplfr.applications.exoclimate.predict config=applications/exoclimate/configs/ewb-baseline.yaml
+python -m gplfr.experiments.exoclimate.train config=experiments/exoclimate/configs/ewb-baseline.yaml
+python -m gplfr.experiments.exoclimate.predict config=experiments/exoclimate/configs/ewb-baseline.yaml
 ```
 
 The application modules themselves are the supported public CLI surface in this mirror.

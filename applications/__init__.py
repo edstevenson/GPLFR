@@ -1,1 +1,0 @@
-"""GPLFR application package scaffold."""

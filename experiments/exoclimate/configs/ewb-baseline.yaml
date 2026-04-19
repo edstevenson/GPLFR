@@ -3,7 +3,7 @@ subset: multi-GCM_complete-obs-only
 protocol: standard
 include_standard_test_unique: false
 data_dir: exoworldsbench/dataset
-out_dir: gplfr/applications/exoclimate/runs/ewb-baseline
-model_path: gplfr/applications/exoclimate/runs/ewb-baseline/model.npz
-prediction_path: gplfr/applications/exoclimate/runs/ewb-baseline/predictions.npz
+out_dir: gplfr/experiments/exoclimate/runs/ewb-baseline
+model_path: gplfr/experiments/exoclimate/runs/ewb-baseline/model.npz
+prediction_path: gplfr/experiments/exoclimate/runs/ewb-baseline/predictions.npz
 notes: public benchmark seed trained on the EWB train split only

@@ -241,7 +241,7 @@ def _maybe_submit_slurm(*, cfg_path: Path, overrides: dict[str, str], cfg: dict[
         "-e", str(out_dir / "slurm.err"),
         f"--export=XCE_CORES={cpus_per_task},XCE_TOY_SLURM_BATCH=1",
         str(run_slurm),
-        "-m", "gplfr.applications.toy.sweep",
+        "-m", "gplfr.experiments.toy.sweep",
         f"config={slurm_cfg_path}",
     ]
 

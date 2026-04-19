@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 import exoworldsbench as ewb
-from gplfr.applications.exoclimate import FIELD_GROUP_NAMES, predict, train
+from gplfr.experiments.exoclimate import FIELD_GROUP_NAMES, predict, train
 
 
 def _bundle(subset: str, protocol: str, *, field_names: list[str], input_names: list[str], space: str) -> ewb.DataBundle:

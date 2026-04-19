@@ -1,7 +1,7 @@
 """Plot toy-benchmark compression curves (metric vs latent_dim / n_components).
 
 This is a thin wrapper around the (more up-to-date) PyXOpto plotting utilities:
-`gplfr.applications.pyxopto.compression_curve`.
+`gplfr.experiments.pyxopto.compression_curve`.
 
 It is compatible with toy sweep outputs produced by:
 - `scripts/toy_merge_parallel_seeds.py` (writes `metrics.json` with `variants`)

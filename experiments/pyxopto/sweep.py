@@ -154,7 +154,7 @@ def _maybe_submit_slurm(*, cfg_path: Path, overrides: dict[str, str], cfg: dict[
         "-e", str(out_dir / "slurm.err"),
         f"--export=XCE_CORES={cpus_per_task},XCE_PYXOPTO_SLURM_BATCH=1",
         str(run_slurm),
-        "-m", "gplfr.applications.pyxopto.sweep",
+        "-m", "gplfr.experiments.pyxopto.sweep",
         f"config={slurm_cfg_path}",
     ]
 
