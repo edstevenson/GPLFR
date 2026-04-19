@@ -26,8 +26,8 @@ try:
 except ImportError:
     pass
 
-from gplfr.gplfr.kernels import apply_kernel
-from gplfr.gplfr.linear_trend import build_design_matrix, fit_ridge
+from gplfr.shared.kernels import apply_kernel
+from gplfr.shared.linear_trend import build_design_matrix, fit_ridge
 from ._mvn_cholesky import MVNCholesky
 
 

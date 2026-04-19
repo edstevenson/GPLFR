@@ -20,7 +20,7 @@ import numpy as np
 import torch
 import yaml
 
-from gplfr.gplfr.kernels import apply_kernel, stabilize_kernel
+from gplfr.shared.kernels import apply_kernel, stabilize_kernel
 
 
 def _blob_dictionary(

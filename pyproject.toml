@@ -24,6 +24,14 @@ dependencies = [
 dev = ["pytest"]
 notebooks = ["jupyter", "matplotlib"]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["gplfr", "gplfr.*", "applications", "applications.*", "scripts", "scripts.*"]
+[tool.setuptools]
+packages = [
+  "gplfr",
+  "gplfr.shared",
+  "gplfr.applications",
+  "gplfr.applications.exoclimate",
+  "gplfr.applications.pyxopto",
+  "gplfr.applications.toy",
+  "gplfr.applications.toy.data",
+]
+package-dir = { "gplfr" = ".", "gplfr.shared" = "shared", "gplfr.applications" = "applications", "gplfr.applications.exoclimate" = "applications/exoclimate", "gplfr.applications.pyxopto" = "applications/pyxopto", "gplfr.applications.toy" = "applications/toy", "gplfr.applications.toy.data" = "applications/toy/data" }

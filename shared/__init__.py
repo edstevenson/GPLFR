@@ -1,4 +1,4 @@
-"""GPLFR core package scaffold."""
+"""Shared GPLFR method machinery used across applications."""
 
 from .kernels import apply_kernel, compute_sim_type_kernel, matern32_kernel, matern52_kernel, rbf_kernel, stabilize_kernel
 from .linear_trend import build_design_matrix, fit_ridge
@@ -9,6 +9,9 @@ __all__ = [
     "apply_kernel",
     "beta_independent",
     "beta_rank1_diag",
+    "beta_independent_xce",
+    "beta_rank1_diag_xce",
+    "beta_structured_field_xce",
     "build_design_matrix",
     "compute_sim_type_kernel",
     "fit_ridge",

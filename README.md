@@ -43,20 +43,20 @@ plots predictions.
 | `applications/exoclimate/` | ExoWorldsBench climate-emulation application | depends on dataset |
 
 Each application ships its own `gplfr.py` with a domain-adapted model class on
-top of the shared primitives in `gplfr.{kernels,linear_trend,tempering,utils}`.
+top of the shared primitives in `gplfr.shared.{kernels,linear_trend,tempering,utils}`.
 
-## CLI
+## Application entrypoints
 
 ```bash
-python -m gplfr.scripts.train config=applications/exoclimate/configs/ewb-baseline.yaml
-python -m gplfr.scripts.predict config=applications/exoclimate/configs/ewb-baseline.yaml
+python -m gplfr.applications.exoclimate.train config=applications/exoclimate/configs/ewb-baseline.yaml
+python -m gplfr.applications.exoclimate.predict config=applications/exoclimate/configs/ewb-baseline.yaml
 ```
 
-`train` and `predict` are the supported public entrypoints in this mirror.
+The application modules themselves are the supported public CLI surface in this mirror.
 
 <!-- TODO at first gplfr push: insert a "## Reproducing the paper's exoclimate flagship" section
      here, linking the v0.1.0-paper GitHub Release that attaches the reviewer-submission zip.
-     See docs/superpowers/plans/2026-04-18-gplfr-public-mirror-tier2.md for the release-time checklist. -->
+     See docs/superpowers/plans/2026-04-18-gplfr-public-mirror-tier2.md for the release-time checklist. Can mention its a bit of a mess!-->
 
 ## Citation
 
@@ -73,7 +73,3 @@ If you use GPLFR in your work, please cite:
 
 Update the BibTeX block with the final venue and coauthor list before the first
 public push.
-
-## License
-
-MIT. See [LICENSE](LICENSE).

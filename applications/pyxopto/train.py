@@ -219,7 +219,7 @@ def _fit_gplfr(
     val_data: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     from .gplfr import GPLFR
-    from gplfr.gplfr.kernels import compute_sim_type_kernel
+    from gplfr.shared.kernels import compute_sim_type_kernel
     import torch
 
     dtype = str(cfg.get("dtype", "float64")).lower()

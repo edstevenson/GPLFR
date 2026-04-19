@@ -32,7 +32,7 @@ try:
 except ImportError:
     pass
 
-from gplfr.gplfr.kernels import apply_kernel, compute_sim_type_kernel
+from gplfr.shared.kernels import apply_kernel, compute_sim_type_kernel
 from .lengthscale import min_lengthscale_1nn
 from ._mvn_cholesky import MVNCholesky
 
