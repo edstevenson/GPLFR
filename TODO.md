@@ -1,0 +1,3 @@
+- update README with real citation + paper link
+- add ThousandWorlds repository/paper links when public
+- check demos for decent results

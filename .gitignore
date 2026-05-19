@@ -3,3 +3,15 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .venv/
+*.executed.ipynb
+*.pt
+*.npz
+*.png
+slurm-*.out
+slurm-*.err
+demos/synthetic_learning_curve/data/
+demos/synthetic_learning_curve/aggregate.json
+demos/synthetic_learning_curve/plot_inputs.csv
+demos/synthetic_learning_curve/plot_inputs.json
+demos/synthetic_learning_curve/results/
+demos/synthetic_learning_curve/plots/

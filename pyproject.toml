@@ -14,9 +14,6 @@ dependencies = [
   "jaxtyping",
   "numpy>=1.24",
   "pyro-ppl",
-  "PyYAML",
-  "scikit-learn",
-  "scipy",
   "torch",
 ]
 
@@ -25,13 +22,5 @@ dev = ["pytest"]
 notebooks = ["jupyter", "matplotlib"]
 
 [tool.setuptools]
-packages = [
-  "gplfr",
-  "gplfr.shared",
-  "gplfr.experiments",
-  "gplfr.experiments.exoclimate",
-  "gplfr.experiments.pyxopto",
-  "gplfr.experiments.toy",
-  "gplfr.experiments.toy.data",
-]
-package-dir = { "gplfr" = ".", "gplfr.shared" = "shared", "gplfr.experiments" = "experiments", "gplfr.experiments.exoclimate" = "experiments/exoclimate", "gplfr.experiments.pyxopto" = "experiments/pyxopto", "gplfr.experiments.toy" = "experiments/toy", "gplfr.experiments.toy.data" = "experiments/toy/data" }
+packages = ["gplfr"]
+package-dir = { "gplfr" = "." }
