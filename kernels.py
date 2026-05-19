@@ -65,15 +65,6 @@ def matern52_kernel(
 
 
 @jaxtyped(typechecker=beartype)
-def compute_sim_type_kernel(
-    L_corr: Float[Tensor, "n_types n_types"],
-    r_sim: Float[Tensor, "n_types"],
-) -> Float[Tensor, "n_types n_types"]:
-    R = L_corr @ L_corr.T
-    return r_sim.unsqueeze(1) * r_sim.unsqueeze(0) * R
-
-
-@jaxtyped(typechecker=beartype)
 def apply_kernel(
     kernel: Literal["rbf", "matern32", "matern52"],
     X1: Float[Tensor, "n1 d"],

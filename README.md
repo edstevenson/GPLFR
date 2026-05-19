@@ -1,66 +1,52 @@
 # **GPLFR** (Gaussian Process Latent Factor Regression)
 
-Reference implementation accompanying the methods paper. Three worked examples ship in-tree: 
-a synthetic toy problem, a biomedical optics (PyXOpto) emulation problem, and an exoplanet climate emulation problem.
+Reference implementation accompanying the methods paper. This repo is for understanding the method, fitting small synthetic problems, and adapting the model to related structured-output tasks.
 
 ## Install
 
 ```bash
 pip install -e .
+pip install -e '.[notebooks]'  # optional notebook support
+pip install -e '.[dev]'        # optional test support
 ```
-
-For notebooks:
-
-```bash
-pip install -e '.[notebooks]'
-```
-
-For tests:
-
-```bash
-pip install -e '.[dev]'
-```
-
-Python 3.10+, PyTorch, and Pyro are required. The exoclimate application expects
-the public `exoworldsbench` package as a peer dependency.
 
 ## Quickstart
 
-```bash
-jupyter lab notebooks/quickstart.ipynb
+```python
+from gplfr import GPLFR, create_synthetic_data
+
+data = create_synthetic_data(N=64, Dx=2, H=6, W=6, D_sig=3, sigma_nuis=0.3, sigma_eps=0.05, seed=0)
+model = GPLFR(
+    latent_dim=3,
+    kernel="rbf",
+    lengthscale_grouping="per_latent",
+    amplitude_grouping="fixed",
+    amplitude=1.0,
+)
+fit = model.fit(data["X"][:48], data["Y"][:48], num_steps=200, verbose=False, seed=0)
+pred = model.predict(data["X"][48:])
+print(fit.final_loss, pred.shape)
 ```
 
-A small synthetic demo that generates data, fits `experiments.toy.GPLFR`, and
-plots predictions.
-
-## Worked examples
-
-| Path | What it shows | Scale |
-| --- | --- | --- |
-| `notebooks/quickstart.ipynb` | `fit -> predict -> plot` on synthetic data | <1 min |
-| `experiments/toy/` | Paper toy experiments: sweeps, learning curves, compression curves | minutes-hours |
-| `experiments/pyxopto/` | Paper PyXOpto reflectance experiments | hours |
-| `experiments/exoclimate/` | ExoWorldsBench climate-emulation experiment | depends on dataset |
-
-Each application ships its own `gplfr.py` with a domain-adapted model class on
-top of the shared primitives in `gplfr.shared.{kernels,linear_trend,tempering,utils}`.
-
-## Application entrypoints
+Or open the notebook:
 
 ```bash
-python -m gplfr.experiments.exoclimate.train config=experiments/exoclimate/configs/ewb-baseline.yaml
-python -m gplfr.experiments.exoclimate.predict config=experiments/exoclimate/configs/ewb-baseline.yaml
+jupyter lab demos/quickstart.ipynb
 ```
 
-The application modules themselves are the supported public CLI surface in this mirror.
+## Source files
 
-<!-- TODO at first gplfr push: insert a "## Reproducing the paper's exoclimate flagship" section
-     here, linking the v0.1.0-paper GitHub Release that attaches the reviewer-submission zip.
-     See docs/superpowers/plans/2026-04-18-gplfr-public-mirror-tier2.md for the release-time checklist. Can mention its a bit of a mess!-->
+| Path | Role |
+| --- | --- |
+| `model.py` | `GPLFR` model and fit/predict API |
+| `synthetic.py` | in-memory GP-field toy data generator |
+| `kernels.py` | covariance kernels and stabilization |
+
+## Paper reproduction
+
+This repository is not the exact frozen paper artifact. For exact reproduction of the paper results, use the frozen zip artifact attached to the release rather than relying on this repository alone.
 
 ## Citation
-
-If you use GPLFR in your work, please cite:
 
 ```bibtex
 @article{gplfr2026,
@@ -71,5 +57,4 @@ If you use GPLFR in your work, please cite:
 }
 ```
 
-Update the BibTeX block with the final venue and coauthor list before the first
-public push.
+See [LICENSE](LICENSE) for usage terms.

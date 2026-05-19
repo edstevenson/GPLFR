@@ -1,9 +1,0 @@
-name: uai
-subset: single-GCM_complete-obs-only
-protocol: standard
-include_standard_test_unique: false
-data_dir: exoworldsbench/dataset
-out_dir: gplfr/experiments/exoclimate/runs/uai
-model_path: gplfr/experiments/exoclimate/runs/uai/model.npz
-prediction_path: gplfr/experiments/exoclimate/runs/uai/predictions.npz
-notes: public EWB-backed seed for the locked UAI lane
