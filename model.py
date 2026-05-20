@@ -53,7 +53,7 @@ class GPLFR:
         amplitude_grouping: AmplitudeGrouping = "fixed",
         amplitude: float | None = 1.0,
         inverse_temperature: float = 1.0,
-        latent_noise: float = 1.0e-2,
+        latent_noise: float = 1.0e-3,
         jitter: float = 1.0e-8,
         dtype: torch.dtype = torch.float64,
         device: torch.device | str = "cpu",

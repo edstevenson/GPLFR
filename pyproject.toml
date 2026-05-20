@@ -18,8 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
-notebooks = ["jupyter", "matplotlib"]
+dev = ["jupyter", "matplotlib", "pytest"]
 
 [tool.setuptools]
 packages = ["gplfr"]

@@ -4,3 +4,8 @@ __pycache__/
 .pytest_cache/
 .venv/
 *.executed.ipynb
+*.pt
+*.npz
+*.png
+slurm-*.out
+slurm-*.err

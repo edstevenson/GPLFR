@@ -1,4 +1,4 @@
-"""Synthetic GPLFR toy data with spatially-correlated nuisance fields.
+"""Synthetic GPLFR data with spatially-correlated nuisance fields.
 
 Forward model (per sample i):
   y_i = W_sig z_sig(x_i) + y_nuis,i + eps_i
