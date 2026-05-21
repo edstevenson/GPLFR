@@ -29,7 +29,7 @@ For a script-style reproduction of the synthetic learning-curve experiment, see 
 
 GPLFR was motivated by the exoplanet climate prediction problem.
 This repository is a lightweight reference implementation of GPLFR.
-For the exoclimate dataset, more thorough benchmarking, and the problem-specific adaptation of GPLFR, see [ThousandWorlds](https://github.com/edstevenson/ThousandWorlds) and the associated paper (TODO: add paper link).
+For an expanded version of the exoclimate dataset, more thorough benchmarking, and the problem-specific adaptation of GPLFR, see [ThousandWorlds](https://github.com/edstevenson/ThousandWorlds) and the associated paper (TODO: add paper link).
 
 ## Citation
 
