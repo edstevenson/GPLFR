@@ -18,3 +18,5 @@ python demos/synthetic_learning_curve/plot_learning_curve.py
 The final plot is written to:
 
 `demos/synthetic_learning_curve/learning_curve.png`
+
+The full grid takes a while. For a fast end-to-end check (tiny dataset, few steps), pass `--config config_smoke.json` to each of the four scripts; this is the configuration exercised in CI.

@@ -1,11 +1,11 @@
 {
-  "data_path": "data/synthetic_data.npz",
-  "split_path": "data/synthetic_split.npz",
-  "seeds": [0, 1, 2, 3, 4],
-  "n_train": [50, 100, 200, 400, 800],
-  "latent_dim": 6,
-  "num_steps": 5000,
-  "log_every": 50,
+  "data_path": "data/synthetic_data_smoke.npz",
+  "split_path": "data/synthetic_split_smoke.npz",
+  "seeds": [0, 1],
+  "n_train": [25, 50],
+  "latent_dim": 4,
+  "num_steps": 40,
+  "log_every": 10,
   "inverse_temperature": 0.1,
   "latent_noise": 1e-5,
   "kernel": "rbf",
@@ -16,13 +16,13 @@
   "lr_Z": 0.01,
   "lr_global": 0.003,
   "dtype": "float64",
-  "device": "auto",
+  "device": "cpu",
   "dataset": {
-    "N": 3000,
+    "N": 200,
     "Dx": 3,
-    "H": 16,
-    "W": 16,
-    "D_sig": 6,
+    "H": 8,
+    "W": 8,
+    "D_sig": 4,
     "kernel": "rbf",
     "ell": 2.0,
     "ell_mode": "uniform",
@@ -38,8 +38,8 @@
     "seed": 0
   },
   "split": {
-    "n_train_pool": 1600,
-    "n_test": 500,
+    "n_train_pool": 120,
+    "n_test": 60,
     "seed": 0
   }
 }

@@ -14,6 +14,8 @@ This installs GPLFR plus the dependencies needed for demos and tests.
 
 Start with `demos/quickstart.ipynb`, which generates a small synthetic problem, fits GPLFR, and visualizes held-out predictions.
 
+`predict` returns the posterior predictive mean; pass `return_std=True` for the predictive standard deviation (add `include_noise=True` to include observation noise), or call `sample(X_new, n_samples)` to draw from the predictive distribution.
+
 For a script-style reproduction of the synthetic learning-curve experiment, see `demos/synthetic_learning_curve/`; the plot is written to `demos/synthetic_learning_curve/learning_curve.png`.
 
 ## Source files
@@ -24,6 +26,7 @@ For a script-style reproduction of the synthetic learning-curve experiment, see 
 | `synthetic.py` | synthetic data generator |
 | `kernels.py` | covariance kernels |
 | `demos/` | quickstart and synthetic data learning-curve example |
+| `tests/` | smoke tests for the public surface, kernels, and model |
 
 ## Relation to exoplanet climate prediction / ThousandWorlds
 

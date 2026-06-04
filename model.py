@@ -150,18 +150,43 @@ class GPLFR:
         return self.fit_result_
 
     @torch.no_grad()
-    def predict(self, X_new: np.ndarray | Tensor) -> np.ndarray:
-        self._require_fitted()
-        Xn = self._as_tensor(X_new)
-        if Xn.ndim == 1:
-            Xn = Xn.unsqueeze(0)
+    def predict(
+        self, X_new: np.ndarray | Tensor, *, return_std: bool = False, include_noise: bool = False
+    ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+        """Posterior predictive mean of the signal at ``X_new``.
 
-        assert self._cached_state_ is not None
-        preds = []
-        for state in self._cached_state_:
-            Z_mean = self._gp_predict_latents_mean(Xn, state)
-            preds.append(Z_mean @ state["mu_W"])
-        return torch.stack(preds, dim=0).mean(dim=0).cpu().numpy()
+        With ``return_std=True`` also returns the predictive standard deviation,
+        combining GP latent uncertainty with the collapsed-decoder posterior
+        (plus observation noise when ``include_noise=True``).
+        """
+        Xn = self._prep_inputs(X_new)
+        means, variances = self._predict_moments(Xn, include_noise=include_noise)
+        mean = means.mean(dim=0)
+        if not return_std:
+            return mean.cpu().numpy()
+        total_var = variances.mean(dim=0) + ((means - mean) ** 2).mean(dim=0)
+        return mean.cpu().numpy(), total_var.clamp_min(0.0).sqrt().cpu().numpy()
+
+    @torch.no_grad()
+    def sample(
+        self, X_new: np.ndarray | Tensor, n_samples: int = 1, *, seed: int = 0, include_noise: bool = False
+    ) -> np.ndarray:
+        """Draw ``n_samples`` from the posterior predictive at ``X_new``.
+
+        Returns an array of shape ``(n_samples, len(X_new), output_dim)`` by
+        sampling the GP latents and the collapsed decoder ``W`` (plus
+        observation noise when ``include_noise=True``).
+        """
+        Xn = self._prep_inputs(X_new)
+        gen = torch.Generator().manual_seed(int(seed))
+        states = self._cached_state_
+        assert states is not None
+        draws = [
+            self._sample_state(Xn, state, k, gen, include_noise)
+            for state, k in zip(states, self._split_counts(n_samples, len(states)))
+            if k
+        ]
+        return torch.cat(draws, dim=0).cpu().numpy()
 
     def model(self, Y: Tensor, X: Tensor) -> None:
         n_train, d = X.shape
@@ -290,21 +315,60 @@ class GPLFR:
             L_K = torch.linalg.cholesky(self._kernel_matrix(self.X_train_, lengthscale, amplitude))
             Z_train = self.posterior_samples_["Z_T"][i].T
             mu_W, Sigma_W = self._decoder_posterior(Z_train, self.Y_train_, sigma)
-            cached.append({"lengthscale": lengthscale, "amplitude": amplitude, "L_K": L_K, "Z_train": Z_train, "mu_W": mu_W, "Sigma_W": Sigma_W})
+            cached.append({"lengthscale": lengthscale, "amplitude": amplitude, "L_K": L_K, "Z_train": Z_train, "mu_W": mu_W, "Sigma_W": Sigma_W, "sigma_sq": sigma**2})
         self._cached_state_ = cached
 
-    def _gp_predict_latents_mean(self, X_new: Tensor, state: dict[str, Tensor]) -> Tensor:
+    def _predict_moments(self, Xn: Tensor, *, include_noise: bool) -> tuple[Tensor, Tensor]:
+        assert self._cached_state_ is not None
+        means, variances = [], []
+        for state in self._cached_state_:
+            z_mean, z_var = self._gp_predict_latents(Xn, state)
+            mu_W, Sigma_W = state["mu_W"], state["Sigma_W"]
+            mean = z_mean @ mu_W
+            var = (
+                (z_mean @ Sigma_W * z_mean).sum(-1, keepdim=True)
+                + z_var @ (mu_W**2)
+                + z_var @ torch.diagonal(Sigma_W).unsqueeze(-1)
+            )
+            means.append(mean)
+            variances.append(var + state["sigma_sq"] if include_noise else var)
+        return torch.stack(means), torch.stack(variances)
+
+    def _sample_state(self, Xn: Tensor, state: dict[str, Tensor], k: int, gen: torch.Generator, include_noise: bool) -> Tensor:
+        z_mean, z_var = self._gp_predict_latents(Xn, state)
+        t, q = z_mean.shape
+        out = int(state["mu_W"].shape[1])
+        Z = z_mean + z_var.sqrt() * self._randn((k, t, q), gen)
+        L_W = torch.linalg.cholesky(state["Sigma_W"])
+        W = state["mu_W"] + torch.einsum("qr,krj->kqj", L_W, self._randn((k, q, out), gen))
+        f = torch.einsum("ktq,kqj->ktj", Z, W)
+        return f + state["sigma_sq"].sqrt() * self._randn((k, t, out), gen) if include_noise else f
+
+    def _gp_predict_latents(self, X_new: Tensor, state: dict[str, Tensor]) -> tuple[Tensor, Tensor]:
         assert self.X_train_ is not None
         K_star = apply_kernel(self.kernel, X_new, state["lengthscale"], X_new.new_tensor(1.0), X2=self.X_train_)
         K_star = self._scale_kernel(K_star, state["amplitude"])
-        L_K = state["L_K"]
-        Z_train = state["Z_train"]
+        L_K, Z_train = state["L_K"], state["Z_train"]
+        prior_var = state["amplitude"] ** 2 + self.latent_noise
         if L_K.ndim == 2:
-            return torch.cholesky_solve(K_star.T, L_K).T @ Z_train
+            Kinv_kT = torch.cholesky_solve(K_star.T, L_K)
+            mean = Kinv_kT.T @ Z_train
+            reduction = (K_star * Kinv_kT.T).sum(-1, keepdim=True)
+            return mean, (prior_var - reduction).clamp_min(0.0).expand_as(mean)
         if K_star.ndim == 2:
             K_star = K_star.unsqueeze(0).expand(int(L_K.shape[0]), -1, -1)
         Kinv_k = torch.cholesky_solve(K_star.permute(0, 2, 1), L_K).permute(0, 2, 1)
-        return torch.einsum("qtn,nq->tq", Kinv_k, Z_train)
+        mean = torch.einsum("qtn,nq->tq", Kinv_k, Z_train)
+        reduction = (K_star * Kinv_k).sum(-1).T
+        return mean, (prior_var - reduction).clamp_min(0.0)
+
+    def _randn(self, shape: tuple[int, ...], gen: torch.Generator) -> Tensor:
+        return torch.randn(*shape, generator=gen, dtype=self.dtype).to(self.device)
+
+    @staticmethod
+    def _split_counts(n: int, s: int) -> list[int]:
+        base, extra = divmod(int(n), s)
+        return [base + (i < extra) for i in range(s)]
 
     def _collapsed_loglikelihood(self, Y: Tensor, Z: Tensor, sigma: Tensor) -> Tensor:
         n_train, output_dim = Y.shape
@@ -338,6 +402,11 @@ class GPLFR:
         if isinstance(x, Tensor):
             return x.to(device=self.device, dtype=self.dtype)
         return torch.as_tensor(x, device=self.device, dtype=self.dtype)
+
+    def _prep_inputs(self, X_new: np.ndarray | Tensor) -> Tensor:
+        self._require_fitted()
+        Xn = self._as_tensor(X_new)
+        return Xn.unsqueeze(0) if Xn.ndim == 1 else Xn
 
     def _require_fitted(self, *, skip_cache: bool = False) -> None:
         if self.X_train_ is None or self.Y_train_ is None or self.posterior_samples_ is None:

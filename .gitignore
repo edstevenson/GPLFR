@@ -9,3 +9,9 @@ __pycache__/
 *.png
 slurm-*.out
 slurm-*.err
+
+# Generated demo artifacts
+demos/synthetic_learning_curve/data/
+demos/synthetic_learning_curve/results/
+demos/synthetic_learning_curve/aggregate.json
+demos/synthetic_learning_curve/plot_inputs.*
