@@ -8,7 +8,6 @@ Forward model (per sample i):
 
 Output keys:
   - X: (N, Dx)
-  - axis: (Dy,) (dummy 1D axis; Dy = H*W)
   - Y: (N, Dy)
   - Y_sig: (N, Dy) true conditional mean (predictable component)
   - Y_nuis: (N, Dy) nuisance random fields
@@ -92,7 +91,6 @@ def create_synthetic_data(
 ) -> dict[str, np.ndarray]:
     rng = np.random.default_rng(int(seed))
     Dy = int(H) * int(W)
-    axis = np.linspace(0.0, 1.0, Dy, dtype=np.float64)
 
     # Inputs
     X = rng.normal(size=(int(N), int(Dx))).astype(np.float64)
@@ -133,7 +131,6 @@ def create_synthetic_data(
 
     data = {
         "X": X.astype(np.float32),
-        "axis": axis,
         "Y": Y.astype(np.float32),
         "Y_sig": Y_sig.astype(np.float32),
         "Y_nuis": Y_nuis.astype(np.float32),

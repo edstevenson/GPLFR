@@ -1,8 +1,16 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from gplfr import GPLFR, create_synthetic_data
+
+
+def test_amplitude_grouping_validation() -> None:
+    assert GPLFR().amplitude == 1.0  # fixed grouping defaults amplitude to 1.0
+    GPLFR(amplitude_grouping="per_latent")  # no amplitude is fine when it is learned
+    with pytest.raises(ValueError):  # passing amplitude with a non-fixed grouping is rejected
+        GPLFR(amplitude_grouping="per_latent", amplitude=2.0)
 
 
 def test_gplfr_model_fit_and_predict_smoke() -> None:

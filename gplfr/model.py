@@ -51,7 +51,7 @@ class GPLFR:
         lengthscale_grouping: LengthscaleGrouping = "per_latent",
         lengthscale: float | list[float] | np.ndarray | None = None,
         amplitude_grouping: AmplitudeGrouping = "fixed",
-        amplitude: float | None = 1.0,
+        amplitude: float | None = None,
         inverse_temperature: float = 0.1,
         latent_noise: float = 1.0e-3,
         jitter: float = 1.0e-8,
@@ -78,8 +78,10 @@ class GPLFR:
 
         self.amplitude_grouping: AmplitudeGrouping = amplitude_grouping
         self.amplitude = None if amplitude is None else float(amplitude)
-        if self.amplitude_grouping == "fixed" and self.amplitude is None:
-            raise ValueError("amplitude is required when amplitude_grouping='fixed'")
+        if self.amplitude_grouping == "fixed":
+            self.amplitude = 1.0 if self.amplitude is None else self.amplitude  # natural default
+        elif self.amplitude is not None:
+            raise ValueError("amplitude is only used when amplitude_grouping='fixed'")
         if self.amplitude is not None and self.amplitude <= 0:
             raise ValueError("amplitude must be > 0")
 
@@ -100,8 +102,7 @@ class GPLFR:
 
         self.X_train_: Tensor | None = None
         self.Y_train_: Tensor | None = None
-        self.posterior_samples_: dict[str, Tensor] | None = None
-        self._cached_state_: list[dict[str, Tensor]] | None = None
+        self._state_: dict[str, Tensor] | None = None  # cached MAP state for prediction
         self.fit_result_: GPLFRFitResult | None = None
 
     def fit(
@@ -139,14 +140,7 @@ class GPLFR:
         )
 
         self.fit_result_ = GPLFRFitResult(int(num_steps), float(final_loss), loss_curve=loss_curve)
-        params = guide(self.Y_train_, self.X_train_)
-        samples = {k: v.detach().unsqueeze(0) for k, v in params.items() if isinstance(v, Tensor)}
-        if self.lengthscale_grouping == "fixed":
-            samples["lengthscale"] = self._fixed_lengthscale_tensor(X_t).unsqueeze(0)
-        if self.amplitude_grouping == "fixed":
-            samples["amplitude"] = X_t.new_tensor(float(self.amplitude)).view(1)
-        self.posterior_samples_ = samples
-        self._build_cached_state()
+        self._build_state(guide(self.Y_train_, self.X_train_))
         return self.fit_result_
 
     @torch.no_grad()
@@ -160,12 +154,10 @@ class GPLFR:
         (plus observation noise when ``include_noise=True``).
         """
         Xn = self._prep_inputs(X_new)
-        means, variances = self._predict_moments(Xn, include_noise=include_noise)
-        mean = means.mean(dim=0)
+        mean, var = self._predict_moments(Xn, include_noise=include_noise)
         if not return_std:
             return mean.cpu().numpy()
-        total_var = variances.mean(dim=0) + ((means - mean) ** 2).mean(dim=0)
-        return mean.cpu().numpy(), total_var.clamp_min(0.0).sqrt().cpu().numpy()
+        return mean.cpu().numpy(), var.clamp_min(0.0).sqrt().cpu().numpy()
 
     @torch.no_grad()
     def sample(
@@ -178,15 +170,19 @@ class GPLFR:
         observation noise when ``include_noise=True``).
         """
         Xn = self._prep_inputs(X_new)
+        assert self._state_ is not None
+        state = self._state_
         gen = torch.Generator().manual_seed(int(seed))
-        states = self._cached_state_
-        assert states is not None
-        draws = [
-            self._sample_state(Xn, state, k, gen, include_noise)
-            for state, k in zip(states, self._split_counts(n_samples, len(states)))
-            if k
-        ]
-        return torch.cat(draws, dim=0).cpu().numpy()
+        z_mean, z_var = self._gp_predict_latents(Xn, state)
+        t, q = z_mean.shape
+        out = int(state["mu_W"].shape[1])
+        Z = z_mean + z_var.sqrt() * self._randn((n_samples, t, q), gen)
+        L_W = torch.linalg.cholesky(state["Sigma_W"])
+        W = state["mu_W"] + torch.einsum("qr,krj->kqj", L_W, self._randn((n_samples, q, out), gen))
+        f = torch.einsum("ktq,kqj->ktj", Z, W)
+        if include_noise:
+            f = f + state["sigma_sq"].sqrt() * self._randn((n_samples, t, out), gen)
+        return f.cpu().numpy()
 
     def model(self, Y: Tensor, X: Tensor) -> None:
         n_train, d = X.shape
@@ -243,7 +239,7 @@ class GPLFR:
                 curve.append(row)
             if verbose:
                 print(f"[GPLFR] step={step}/{total} loss={row['loss']:.6g}")
-        return guide, last_loss, curve
+        return guide, last_loss / loss_norm, curve  # per-element, matching loss_curve rows
 
     def _build_svi(self, *, lr_Z: float, lr_global: float) -> tuple[AutoDelta, SVI, float]:
         init_med = init_to_median()
@@ -304,45 +300,28 @@ class GPLFR:
             return K * amp2
         return K.unsqueeze(0) * amp2[:, None, None] if K.ndim == 2 else K * amp2[:, None, None]
 
-    def _build_cached_state(self) -> None:
-        self._require_fitted(skip_cache=True)
-        assert self.X_train_ is not None and self.Y_train_ is not None and self.posterior_samples_ is not None
-        cached = []
-        for i in range(int(self.posterior_samples_["sigma"].shape[0])):
-            lengthscale = self.posterior_samples_["lengthscale"][i]
-            sigma = self.posterior_samples_["sigma"][i]
-            amplitude = self.posterior_samples_["amplitude"][i]
-            L_K = torch.linalg.cholesky(self._kernel_matrix(self.X_train_, lengthscale, amplitude))
-            Z_train = self.posterior_samples_["Z_T"][i].T
-            mu_W, Sigma_W = self._decoder_posterior(Z_train, self.Y_train_, sigma)
-            cached.append({"lengthscale": lengthscale, "amplitude": amplitude, "L_K": L_K, "Z_train": Z_train, "mu_W": mu_W, "Sigma_W": Sigma_W, "sigma_sq": sigma**2})
-        self._cached_state_ = cached
+    def _build_state(self, params: dict[str, Tensor]) -> None:
+        assert self.X_train_ is not None and self.Y_train_ is not None
+        lengthscale = self._fixed_lengthscale_tensor(self.X_train_) if self.lengthscale_grouping == "fixed" else params["lengthscale"].detach()
+        amplitude = self.X_train_.new_tensor(float(self.amplitude)) if self.amplitude_grouping == "fixed" else params["amplitude"].detach()
+        sigma = params["sigma"].detach()
+        Z_train = params["Z_T"].detach().T
+        L_K = torch.linalg.cholesky(self._kernel_matrix(self.X_train_, lengthscale, amplitude))
+        mu_W, Sigma_W = self._decoder_posterior(Z_train, self.Y_train_, sigma)
+        self._state_ = {"lengthscale": lengthscale, "amplitude": amplitude, "L_K": L_K, "Z_train": Z_train, "mu_W": mu_W, "Sigma_W": Sigma_W, "sigma_sq": sigma**2}
 
     def _predict_moments(self, Xn: Tensor, *, include_noise: bool) -> tuple[Tensor, Tensor]:
-        assert self._cached_state_ is not None
-        means, variances = [], []
-        for state in self._cached_state_:
-            z_mean, z_var = self._gp_predict_latents(Xn, state)
-            mu_W, Sigma_W = state["mu_W"], state["Sigma_W"]
-            mean = z_mean @ mu_W
-            var = (
-                (z_mean @ Sigma_W * z_mean).sum(-1, keepdim=True)
-                + z_var @ (mu_W**2)
-                + z_var @ torch.diagonal(Sigma_W).unsqueeze(-1)
-            )
-            means.append(mean)
-            variances.append(var + state["sigma_sq"] if include_noise else var)
-        return torch.stack(means), torch.stack(variances)
-
-    def _sample_state(self, Xn: Tensor, state: dict[str, Tensor], k: int, gen: torch.Generator, include_noise: bool) -> Tensor:
+        assert self._state_ is not None
+        state = self._state_
         z_mean, z_var = self._gp_predict_latents(Xn, state)
-        t, q = z_mean.shape
-        out = int(state["mu_W"].shape[1])
-        Z = z_mean + z_var.sqrt() * self._randn((k, t, q), gen)
-        L_W = torch.linalg.cholesky(state["Sigma_W"])
-        W = state["mu_W"] + torch.einsum("qr,krj->kqj", L_W, self._randn((k, q, out), gen))
-        f = torch.einsum("ktq,kqj->ktj", Z, W)
-        return f + state["sigma_sq"].sqrt() * self._randn((k, t, out), gen) if include_noise else f
+        mu_W, Sigma_W = state["mu_W"], state["Sigma_W"]
+        mean = z_mean @ mu_W
+        var = (
+            (z_mean @ Sigma_W * z_mean).sum(-1, keepdim=True)
+            + z_var @ (mu_W**2)
+            + z_var @ torch.diagonal(Sigma_W).unsqueeze(-1)
+        )
+        return mean, (var + state["sigma_sq"] if include_noise else var)
 
     def _gp_predict_latents(self, X_new: Tensor, state: dict[str, Tensor]) -> tuple[Tensor, Tensor]:
         assert self.X_train_ is not None
@@ -364,11 +343,6 @@ class GPLFR:
 
     def _randn(self, shape: tuple[int, ...], gen: torch.Generator) -> Tensor:
         return torch.randn(*shape, generator=gen, dtype=self.dtype).to(self.device)
-
-    @staticmethod
-    def _split_counts(n: int, s: int) -> list[int]:
-        base, extra = divmod(int(n), s)
-        return [base + (i < extra) for i in range(s)]
 
     def _collapsed_loglikelihood(self, Y: Tensor, Z: Tensor, sigma: Tensor) -> Tensor:
         n_train, output_dim = Y.shape
@@ -408,8 +382,6 @@ class GPLFR:
         Xn = self._as_tensor(X_new)
         return Xn.unsqueeze(0) if Xn.ndim == 1 else Xn
 
-    def _require_fitted(self, *, skip_cache: bool = False) -> None:
-        if self.X_train_ is None or self.Y_train_ is None or self.posterior_samples_ is None:
+    def _require_fitted(self) -> None:
+        if self._state_ is None:
             raise RuntimeError("Model is not fitted; call fit() first.")
-        if not skip_cache and self._cached_state_ is None:
-            raise RuntimeError("Model prediction cache is missing.")

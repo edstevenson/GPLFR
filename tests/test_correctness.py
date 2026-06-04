@@ -38,7 +38,7 @@ def test_predict_matches_dense_gp_conditional() -> None:
     model.fit(X_train, Y_train, num_steps=30, verbose=False, seed=0)
     pred = torch.from_numpy(model.predict(X_test))
 
-    state = model._cached_state_[0]
+    state = model._state_
     Xtr, Xte = model.X_train_, model._as_tensor(X_test)
     n_train = Xtr.shape[0]
     eye = torch.eye(n_train, dtype=Xtr.dtype)
