@@ -52,7 +52,7 @@ class GPLFR:
         lengthscale: float | list[float] | np.ndarray | None = None,
         amplitude_grouping: AmplitudeGrouping = "fixed",
         amplitude: float | None = 1.0,
-        inverse_temperature: float = 1.0,
+        inverse_temperature: float = 0.1,
         latent_noise: float = 1.0e-3,
         jitter: float = 1.0e-8,
         dtype: torch.dtype = torch.float64,

@@ -22,4 +22,3 @@ dev = ["jupyter", "matplotlib", "pytest"]
 
 [tool.setuptools]
 packages = ["gplfr"]
-package-dir = { "gplfr" = "." }

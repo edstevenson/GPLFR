@@ -26,7 +26,7 @@ For a script-style reproduction of the synthetic learning-curve experiment, see 
 | `synthetic.py` | synthetic data generator |
 | `kernels.py` | covariance kernels |
 | `demos/` | quickstart and synthetic data learning-curve example |
-| `tests/` | smoke tests for the public surface, kernels, and model |
+| `tests/` | smoke tests plus numerical-correctness tests (collapsed likelihood, predictive mean) |
 
 ## Relation to exoplanet climate prediction / ThousandWorlds
 

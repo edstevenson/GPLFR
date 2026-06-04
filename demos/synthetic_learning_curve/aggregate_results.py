@@ -32,7 +32,7 @@ def main() -> None:
         "missing_runs": [{"n_train": n, "seed": s} for n, s in sorted(expected - completed)],
         "summary": summary,
         "runs": runs,
-        "model_py_sha256": sha256(HERE / "../../model.py"),
+        "model_py_sha256": sha256(HERE / "../../gplfr/model.py"),
     }
     (HERE / "aggregate.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
