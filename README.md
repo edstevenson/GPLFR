@@ -1,6 +1,6 @@
 # GPLFR (Gaussian Process Latent Factor Regression)
 
-Lightweight reference implementation of Gaussian Process Latent Factor Regression (GPLFR), accompanying the [paper](TODO gplfr paper url)
+Lightweight reference implementation of Gaussian Process Latent Factor Regression (GPLFR), accompanying the [paper](https://doi.org/10.48550/arXiv.2606.06576)
 
 ## Install
 
@@ -38,10 +38,10 @@ For an expanded version of the exoclimate dataset, more thorough benchmarking, a
 
 ```bibtex
 @article{gplfr2026,
-  title   = {GPLFR: Gaussian Process Latent Factor Regression},
-  author  = {Stevenson, Ed and [coauthors]},
-  journal = {[venue]},
+  title   = {Gaussian Process Latent Factor Regression for Low-Data, High-Dimensional Output Problems},
+  author  = {Stevenson, Edward T. and Wolf, Eric T. and Mak, Mei Ting and Mayne, N. J. and Cranmer, Miles},
+  journal = {arXiv preprint arXiv:2606.06576},
   year    = {2026},
-  url     = {TODO: add GPLFR paper URL}
+  url     = {https://doi.org/10.48550/arXiv.2606.06576}
 }
 ```
